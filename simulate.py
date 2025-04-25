@@ -2,6 +2,7 @@ from os.path import join
 import sys
 
 import numpy as np
+import time
 
 
 def load_data(load_dir, bid):
@@ -43,7 +44,7 @@ def summary_stats(u, interior_mask):
 
 if __name__ == '__main__':
     # Load data
-    LOAD_DIR = r'C:\Users\snehi\Documents\Python HPC\modified_swiss_dwellings'
+    LOAD_DIR = '/dtu/projects/02613_2025/data/modified_swiss_dwellings/'
     with open(join(LOAD_DIR, 'building_ids.txt'), 'r') as f:
         building_ids = f.read().splitlines()
 
@@ -66,9 +67,15 @@ if __name__ == '__main__':
     ABS_TOL = 1e-4
 
     all_u = np.empty_like(all_u0)
+    run_times = []
     for i, (u0, interior_mask) in enumerate(zip(all_u0, all_interior_mask)):
+        start = time.time() #run time start
         u = jacobi(u0, interior_mask, MAX_ITER, ABS_TOL)
+        end = time.time()
+        elapsed = end - start
+        run_times.append(elapsed) #list of all run times
         all_u[i] = u
+        print(f"\n Run time for {building_ids[i]}: {elapsed:.4f} seconds")
 
     # Print summary statistics in CSV format
     stat_keys = ['mean_temp', 'std_temp', 'pct_above_18', 'pct_below_15']
@@ -76,3 +83,8 @@ if __name__ == '__main__':
     for bid, u, interior_mask in zip(building_ids, all_u, all_interior_mask):
         stats = summary_stats(u, interior_mask)
         print(f"{bid},", ", ".join(str(stats[k]) for k in stat_keys))
+
+
+##### AVERAGE RUN TIME #####
+avg_run_time = sum(run_times) / len(run_times)
+print(f"\n Average run time: {avg_run_time:.2f} seconds")
